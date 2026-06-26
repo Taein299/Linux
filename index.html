@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ubuntu Touch</title>
+    <script src="https://copy.sh/v86/build/libv86.js"></script>
+    <style>
+        body {
+            background: #2c001e;
+            color: #fff;
+            font-family: monospace;
+            text-align: center;
+            padding: 5px;
+            margin: 0;
+            user-select: none;
+        }
+        #screen-container {
+            width: 100%;
+            max-width: 800px;
+            height: 320px;
+            margin: 0 auto;
+            background: #000;
+            border: 3px solid #4d4d4d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        /* 로딩 메시지 스타일 */
+        .loading-text {
+            color: #cea2c3;
+            font-size: 16px;
+        }
+        /* 에뮬레이터 내부 텍스트 터미널 강제 백색 설정 */
+        #screen-container span, #screen-container pre {
+            color: #fff !important;
+            font-family: monospace !important;
+        }
+        #keyboard {
+            width: 100%;
+            max-width: 800px;
+            margin: 10px auto 0;
+            background: #151515;
+            padding: 6px;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .key-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 4px;
+            gap: 3px;
+        }
+        .key-btn {
+            flex: 1;
+            height: 40px;
+            background: #3c3c3c;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+        .key-btn:active {
+            background: #cea2c3;
+            color: #2c001e;
+        }
+        .wide-key {
+            flex: 2;
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="screen-container">
+        <div class="loading-text" id="loading">리눅스 시스템 다운로드 및 부팅 중... (약 10초 소요)</div>
+    </div>
+    
+    <div id="keyboard">
+        <div class="key-row">
+            <button class="key-btn" data-key="1" data-code="Digit1" data-val="49">1</button>
+            <button class="key-btn" data-key="2" data-code="Digit2" data-val="50">2</button>
+            <button class="key-btn" data-key="3" data-code="Digit3" data-val="51">3</button>
+            <button class="key-btn" data-key="4" data-code="Digit4" data-val="52">4</button>
+            <button class="key-btn" data-key="5" data-code="Digit5" data-val="53">5</button>
+            <button class="key-btn" data-key="6" data-code="Digit6" data-val="54">6</button>
+            <button class="key-btn" data-key="7" data-code="Digit7" data-val="55">7</button>
+            <button class="key-btn" data-key="8" data-code="Digit8" data-val="56">8</button>
+            <button class="key-btn" data-key="9" data-code="Digit9" data-val="57">9</button>
+            <button class="key-btn" data-key="0" data-code="Digit0" data-val="48">0</button>
+        </div>
+        <div class="key-row">
+            <button class="key-btn" data-key="-" data-code="Minus" data-val="189">-</button>
+            <button class="key-btn" data-key="_" data-code="Minus" data-val="189" data-shift="true">_</button>
+            <button class="key-btn" data-key="/" data-code="Slash" data-val="191">/</button>
+            <button class="key-btn" data-key="." data-code="Period" data-val="190">.</button>
+            <button class="key-btn" data-key="=" data-code="Equal" data-val="187">=</button>
+            <button class="key-btn" data-key="+" data-code="Equal" data-val="187" data-shift="true">+</button>
+            <button class="key-btn" data-key="|" data-code="Backslash" data-val="220" data-shift="true">|</button>
+            <button class="key-btn" data-key="*" data-code="Digit8" data-val="56" data-shift="true">*</button>
+            <button class="key-btn" data-key="$" data-code="Digit4" data-val="52" data-shift="true">$</button>
+            <button class="key-btn" data-key=":" data-code="Semicolon" data-val="186" data-shift="true">:</button>
+        </div>
+        <div class="key-row">
+            <button class="key-btn" data-key="q" data-code="KeyQ" data-val="81">q</button>
+            <button class="key-btn" data-key="w" data-code="KeyW" data-val="87">w</button>
+            <button class="key-btn" data-key="e" data-code="KeyE" data-val="69">e</button>
+            <button class="key-btn" data-key="r" data-code="KeyR" data-val="82">r</button>
+            <button class="key-btn" data-key="t" data-code="KeyT" data-val="84">t</button>
+            <button class="key-btn" data-key="y" data-code="KeyY" data-val="89">y</button>
+            <button class="key-btn" data-key="u" data-code="KeyU" data-val="85">u</button>
+            <button class="key-btn" data-key="i" data-code="KeyI" data-val="73">i</button>
+            <button class="key-btn" data-key="o" data-code="KeyO" data-val="79">o</button>
+            <button class="key-btn" data-key="p" data-code="KeyP" data-val="80">p</button>
+        </div>
+        <div class="key-row">
+            <button class="key-btn" data-key="a" data-code="KeyA" data-val="65">a</button>
+            <button class="key-btn" data-key="s" data-code="KeyS" data-val="83">s</button>
+            <button class="key-btn" data-key="d" data-code="KeyD" data-val="68">d</button>
+            <button class="key-btn" data-key="f" data-code="KeyF" data-val="70">f</button>
+            <button class="key-btn" data-key="g" data-code="KeyG" data-val="71">g</button>
+            <button class="key-btn" data-key="h" data-code="KeyH" data-val="72">h</button>
+            <button class="key-btn" data-key="j" data-code="KeyJ" data-val="74">j</button>
+            <button class="key-btn" data-key="k" data-code="KeyK" data-val="75">k</button>
+            <button class="key-btn" data-key="l" data-code="KeyL" data-val="76">l</button>
+        </div>
+        <div class="key-row">
+            <button class="key-btn" data-key="z" data-code="KeyZ" data-val="90">z</button>
+            <button class="key-btn" data-key="x" data-code="KeyX" data-val="88">x</button>
+            <button class="key-btn" data-key="c" data-code="KeyC" data-val="67">c</button>
+            <button class="key-btn" data-key="v" data-code="KeyV" data-val="86">v</button>
+            <button class="key-btn" data-key="b" data-code="KeyB" data-val="66">b</button>
+            <button class="key-btn" data-key="n" data-code="KeyN" data-val="78">n</button>
+            <button class="key-btn" data-key="m" data-code="KeyM" data-val="77">m</button>
+        </div>
+        <div class="key-row">
+            <button class="key-btn wide-key" data-key="Backspace" data-code="Backspace" data-val="8">지우기</button>
+            <button class="key-btn wide-key" data-key=" " data-code="Space" data-val="32">공백</button>
+            <button class="key-btn wide-key" data-key="Enter" data-code="Enter" data-val="13">실행</button>
+        </div>
+    </div>
+
+<script>
+window.onload = function() {
+    var container = document.getElementById("screen-container");
+    var loadingText = document.getElementById("loading");
+
+    var emulator = new V86Starter({
+        screen_container: container,
+        bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
+        vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
+        cdrom: { url: "https://copy.sh/v86/images/linux.iso" }, 
+        memory_size: 32 * 1024 * 1024,
+        autostart: true,
+    });
+
+    // 부팅이 시작되어 화면 렌더링 세팅이 잡히면 로딩 안내 문구 제거
+    emulator.add_listener("emulator-ready", function() {
+        if(loadingText) loadingText.remove();
+        container.style.display = "block"; // 레이아웃 해제 후 터미널 모드로 변경
+    });
+
+    function sendKey(key, code, val, shift) {
+        var props = { key: key, code: code, keyCode: val, which: val, shiftKey: !!shift, bubbles: true, cancelable: true };
+        var down = new KeyboardEvent('keydown', props);
+        var up = new KeyboardEvent('keyup', props);
+        
+        window.dispatchEvent(down);
+        window.dispatchEvent(up);
+        container.dispatchEvent(down);
+        container.dispatchEvent(up);
+    }
+
+    document.querySelectorAll(".key-btn").forEach(function(btn) {
+        btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            var key = btn.getAttribute("data-key");
+            var code = btn.getAttribute("data-code");
+            var val = parseInt(btn.getAttribute("data-val"), 10);
+            var shift = btn.getAttribute("data-shift") === "true";
+            sendKey(key, code, val, shift);
+        });
+    });
+};
+</script>
+</body>
+</html>
+
