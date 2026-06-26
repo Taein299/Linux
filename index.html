@@ -1,192 +1,532 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ubuntu Touch</title>
-    <script src="https://copy.sh/v86/build/libv86.js"></script>
-    <style>
-        body {
-            background: #2c001e;
-            color: #fff;
-            font-family: monospace;
-            text-align: center;
-            padding: 5px;
-            margin: 0;
-            user-select: none;
-        }
-        #screen-container {
-            width: 100%;
-            max-width: 800px;
-            height: 320px;
-            margin: 0 auto;
-            background: #000;
-            border: 3px solid #4d4d4d;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        /* 로딩 메시지 스타일 */
-        .loading-text {
-            color: #cea2c3;
-            font-size: 16px;
-        }
-        /* 에뮬레이터 내부 텍스트 터미널 강제 백색 설정 */
-        #screen-container span, #screen-container pre {
-            color: #fff !important;
-            font-family: monospace !important;
-        }
-        #keyboard {
-            width: 100%;
-            max-width: 800px;
-            margin: 10px auto 0;
-            background: #151515;
-            padding: 6px;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        .key-row {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 4px;
-            gap: 3px;
-        }
-        .key-btn {
-            flex: 1;
-            height: 40px;
-            background: #3c3c3c;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-            touch-action: manipulation;
-        }
-        .key-btn:active {
-            background: #cea2c3;
-            color: #2c001e;
-        }
-        .wide-key {
-            flex: 2;
-            background: #555;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpine Linux — Browser VM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0f14;
+    --surface:  #13161e;
+    --border:   #1e2330;
+    --alpine:   #0d6efd;
+    --alpine-d: #0a58ca;
+    --green:    #2dd4a0;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --term-bg:  #080a0f;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--alpine);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -.2px;
+  }
+  .logo-text span { color: var(--muted); font-weight: 400; }
+
+  .badge {
+    margin-left: auto;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    border: 1px solid;
+    transition: color .3s, border-color .3s;
+  }
+  .badge.booting  { color: var(--muted);  border-color: var(--border); }
+  .badge.running  { color: var(--green);  border-color: var(--green);  }
+  .badge.loading  { color: var(--alpine); border-color: var(--alpine); animation: pulse 1.2s ease infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+
+  /* ── Main layout ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  /* ── Info bar ── */
+  .info-bar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .chip strong { color: var(--text); font-weight: 500; }
+  .chip-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  /* ── Terminal container ── */
+  .terminal-wrap {
+    width: 100%;
+    max-width: 900px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+
+  .terminal-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--border);
+    border-bottom: 1px solid #151821;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+
+  .term-title {
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  #screen_container {
+    background: var(--term-bg);
+    padding: 0;
+    cursor: text;
+    min-height: 520px;
+    position: relative;
+  }
+
+  /* v86 text screen */
+  #screen_container > div {
+    white-space: pre;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 13px !important;
+    line-height: 17px !important;
+    color: #c8d3e4;
+    padding: 12px 14px;
+    min-height: 520px;
+    background: var(--term-bg);
+  }
+
+  #screen_container canvas { display: none; }
+
+  /* ── Loading overlay ── */
+  #loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--term-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+  }
+
+  .spinner-ring {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--alpine);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+  }
+
+  .step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color .4s;
+  }
+  .step.active { color: var(--alpine); }
+  .step.done   { color: var(--green); }
+
+  .step-icon {
+    width: 14px; text-align: center; font-size: 11px;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { background: var(--border); }
+  .btn.primary {
+    background: var(--alpine);
+    border-color: var(--alpine-d);
+    color: #fff;
+  }
+  .btn.primary:hover { background: var(--alpine-d); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn svg { flex-shrink: 0; }
+
+  /* ── Help note ── */
+  .help-note {
+    width: 100%; max-width: 900px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .help-note code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--border);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 11px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    width: 100%; max-width: 900px;
+  }
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--alpine), var(--green));
+    border-radius: 2px;
+    transition: width .6s ease;
+  }
+</style>
 </head>
 <body>
 
-    <div id="screen-container">
-        <div class="loading-text" id="loading">리눅스 시스템 다운로드 및 부팅 중... (약 10초 소요)</div>
+<header>
+  <div class="logo-mark">⌨</div>
+  <div class="logo-text">Alpine Linux <span>— Browser VM via v86</span></div>
+  <div class="badge booting" id="status-badge">● BOOTING</div>
+</header>
+
+<main>
+  <!-- Info chips -->
+  <div class="info-bar">
+    <div class="chip"><div class="chip-dot"></div> <strong>v86</strong> WebAssembly JIT</div>
+    <div class="chip">🐧 <strong>Alpine Linux</strong> 3.x · 9p virtio rootfs</div>
+    <div class="chip">🧠 <strong>512 MB</strong> RAM</div>
+    <div class="chip">⚡ <strong>jsDelivr CDN</strong> · copy.sh images</div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"></div>
     </div>
-    
-    <div id="keyboard">
-        <div class="key-row">
-            <button class="key-btn" data-key="1" data-code="Digit1" data-val="49">1</button>
-            <button class="key-btn" data-key="2" data-code="Digit2" data-val="50">2</button>
-            <button class="key-btn" data-key="3" data-code="Digit3" data-val="51">3</button>
-            <button class="key-btn" data-key="4" data-code="Digit4" data-val="52">4</button>
-            <button class="key-btn" data-key="5" data-code="Digit5" data-val="53">5</button>
-            <button class="key-btn" data-key="6" data-code="Digit6" data-val="54">6</button>
-            <button class="key-btn" data-key="7" data-code="Digit7" data-val="55">7</button>
-            <button class="key-btn" data-key="8" data-code="Digit8" data-val="56">8</button>
-            <button class="key-btn" data-key="9" data-code="Digit9" data-val="57">9</button>
-            <button class="key-btn" data-key="0" data-code="Digit0" data-val="48">0</button>
-        </div>
-        <div class="key-row">
-            <button class="key-btn" data-key="-" data-code="Minus" data-val="189">-</button>
-            <button class="key-btn" data-key="_" data-code="Minus" data-val="189" data-shift="true">_</button>
-            <button class="key-btn" data-key="/" data-code="Slash" data-val="191">/</button>
-            <button class="key-btn" data-key="." data-code="Period" data-val="190">.</button>
-            <button class="key-btn" data-key="=" data-code="Equal" data-val="187">=</button>
-            <button class="key-btn" data-key="+" data-code="Equal" data-val="187" data-shift="true">+</button>
-            <button class="key-btn" data-key="|" data-code="Backslash" data-val="220" data-shift="true">|</button>
-            <button class="key-btn" data-key="*" data-code="Digit8" data-val="56" data-shift="true">*</button>
-            <button class="key-btn" data-key="$" data-code="Digit4" data-val="52" data-shift="true">$</button>
-            <button class="key-btn" data-key=":" data-code="Semicolon" data-val="186" data-shift="true">:</button>
-        </div>
-        <div class="key-row">
-            <button class="key-btn" data-key="q" data-code="KeyQ" data-val="81">q</button>
-            <button class="key-btn" data-key="w" data-code="KeyW" data-val="87">w</button>
-            <button class="key-btn" data-key="e" data-code="KeyE" data-val="69">e</button>
-            <button class="key-btn" data-key="r" data-code="KeyR" data-val="82">r</button>
-            <button class="key-btn" data-key="t" data-code="KeyT" data-val="84">t</button>
-            <button class="key-btn" data-key="y" data-code="KeyY" data-val="89">y</button>
-            <button class="key-btn" data-key="u" data-code="KeyU" data-val="85">u</button>
-            <button class="key-btn" data-key="i" data-code="KeyI" data-val="73">i</button>
-            <button class="key-btn" data-key="o" data-code="KeyO" data-val="79">o</button>
-            <button class="key-btn" data-key="p" data-code="KeyP" data-val="80">p</button>
-        </div>
-        <div class="key-row">
-            <button class="key-btn" data-key="a" data-code="KeyA" data-val="65">a</button>
-            <button class="key-btn" data-key="s" data-code="KeyS" data-val="83">s</button>
-            <button class="key-btn" data-key="d" data-code="KeyD" data-val="68">d</button>
-            <button class="key-btn" data-key="f" data-code="KeyF" data-val="70">f</button>
-            <button class="key-btn" data-key="g" data-code="KeyG" data-val="71">g</button>
-            <button class="key-btn" data-key="h" data-code="KeyH" data-val="72">h</button>
-            <button class="key-btn" data-key="j" data-code="KeyJ" data-val="74">j</button>
-            <button class="key-btn" data-key="k" data-code="KeyK" data-val="75">k</button>
-            <button class="key-btn" data-key="l" data-code="KeyL" data-val="76">l</button>
-        </div>
-        <div class="key-row">
-            <button class="key-btn" data-key="z" data-code="KeyZ" data-val="90">z</button>
-            <button class="key-btn" data-key="x" data-code="KeyX" data-val="88">x</button>
-            <button class="key-btn" data-key="c" data-code="KeyC" data-val="67">c</button>
-            <button class="key-btn" data-key="v" data-code="KeyV" data-val="86">v</button>
-            <button class="key-btn" data-key="b" data-code="KeyB" data-val="66">b</button>
-            <button class="key-btn" data-key="n" data-code="KeyN" data-val="78">n</button>
-            <button class="key-btn" data-key="m" data-code="KeyM" data-val="77">m</button>
-        </div>
-        <div class="key-row">
-            <button class="key-btn wide-key" data-key="Backspace" data-code="Backspace" data-val="8">지우기</button>
-            <button class="key-btn wide-key" data-key=" " data-code="Space" data-val="32">공백</button>
-            <button class="key-btn wide-key" data-key="Enter" data-code="Enter" data-val="13">실행</button>
-        </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="terminal-wrap">
+    <div class="terminal-titlebar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <span class="term-title">tty1 — alpine@localhost</span>
     </div>
 
+    <div id="screen_container">
+      <!-- Loading overlay -->
+      <div id="loading-overlay">
+        <div class="spinner-ring"></div>
+        <div class="loading-steps">
+          <div class="step active" id="step-wasm">
+            <span class="step-icon">⬇</span> libv86.js / v86.wasm 로드 중…
+          </div>
+          <div class="step" id="step-bios">
+            <span class="step-icon">·</span> SeaBIOS / VGA BIOS 로드 중…
+          </div>
+          <div class="step" id="step-fs">
+            <span class="step-icon">·</span> Alpine 루트 파일시스템 로드 중…
+          </div>
+          <div class="step" id="step-boot">
+            <span class="step-icon">·</span> 커널 부팅 중…
+          </div>
+        </div>
+        <div class="loading-label" id="loading-label">파일 다운로드 중…</div>
+      </div>
+
+      <!-- v86 screen goes here -->
+      <div></div>
+      <canvas></canvas>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn primary" id="btn-focus" onclick="focusTerm()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M3 1h2V0H1v4h1V1zm10 0h2v2h1V0h-4v1zM1 12v4h4v-1H2v-3zm13 3v-3h1v4h-4v-1zM4 4h8v8H4z"/>
+      </svg>
+      터미널 포커스
+    </button>
+    <button class="btn" id="btn-reset" onclick="resetVM()" disabled>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+        <path d="M8 1.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V2a.5.5 0 0 1 .5-.5z"/>
+      </svg>
+      재시작
+    </button>
+    <button class="btn" id="btn-fullscreen" onclick="goFullscreen()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M1.5 1h4v1h-3v3h-1zm9 0h4v4h-1v-3h-3zm-9 9h1v3h3v1h-4zm9 3v-3h1v4h-4v-1z"/>
+      </svg>
+      전체화면
+    </button>
+  </div>
+
+  <!-- Help -->
+  <div class="help-note">
+    💡 <strong>로그인:</strong> 사용자명 <code>root</code>, 비밀번호 없음 (엔터) &nbsp;·&nbsp;
+    터미널 클릭 후 키입력 &nbsp;·&nbsp;
+    <code>apk add &lt;패키지명&gt;</code> 으로 패키지 설치 &nbsp;·&nbsp;
+    첫 부팅은 파일시스템 다운로드로 인해 1~2분 소요될 수 있습니다
+  </div>
+</main>
+
+<!-- v86 from jsDelivr CDN -->
 <script>
-window.onload = function() {
-    var container = document.getElementById("screen-container");
-    var loadingText = document.getElementById("loading");
+  // Step animation helpers
+  const steps = ['step-wasm', 'step-bios', 'step-fs', 'step-boot'];
+  let currentStep = 0;
 
-    var emulator = new V86Starter({
-        screen_container: container,
-        bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
-        vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
-        cdrom: { url: "https://copy.sh/v86/images/linux.iso" }, 
-        memory_size: 32 * 1024 * 1024,
-        autostart: true,
-    });
-
-    // 부팅이 시작되어 화면 렌더링 세팅이 잡히면 로딩 안내 문구 제거
-    emulator.add_listener("emulator-ready", function() {
-        if(loadingText) loadingText.remove();
-        container.style.display = "block"; // 레이아웃 해제 후 터미널 모드로 변경
-    });
-
-    function sendKey(key, code, val, shift) {
-        var props = { key: key, code: code, keyCode: val, which: val, shiftKey: !!shift, bubbles: true, cancelable: true };
-        var down = new KeyboardEvent('keydown', props);
-        var up = new KeyboardEvent('keyup', props);
-        
-        window.dispatchEvent(down);
-        window.dispatchEvent(up);
-        container.dispatchEvent(down);
-        container.dispatchEvent(up);
+  function advanceStep(idx) {
+    if (idx > 0) {
+      const prev = document.getElementById(steps[idx - 1]);
+      prev.classList.remove('active');
+      prev.classList.add('done');
+      prev.querySelector('.step-icon').textContent = '✓';
     }
+    if (idx < steps.length) {
+      const cur = document.getElementById(steps[idx]);
+      cur.classList.add('active');
+      cur.querySelector('.step-icon').textContent = '▶';
+    }
+    currentStep = idx;
+    // Update progress
+    const pct = Math.round((idx / steps.length) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
 
-    document.querySelectorAll(".key-btn").forEach(function(btn) {
-        btn.addEventListener("click", function(e) {
-            e.preventDefault();
-            var key = btn.getAttribute("data-key");
-            var code = btn.getAttribute("data-code");
-            var val = parseInt(btn.getAttribute("data-val"), 10);
-            var shift = btn.getAttribute("data-shift") === "true";
-            sendKey(key, code, val, shift);
-        });
+  function setProgress(pct) {
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
+
+  function setLabel(txt) {
+    document.getElementById('loading-label').textContent = txt;
+  }
+
+  function hideOverlay() {
+    document.getElementById('loading-overlay').style.display = 'none';
+    const badge = document.getElementById('status-badge');
+    badge.textContent = '● RUNNING';
+    badge.className = 'badge running';
+    document.getElementById('btn-reset').disabled = false;
+    setProgress(100);
+  }
+
+  function setLoadingBadge() {
+    const badge = document.getElementById('status-badge');
+    badge.textContent = '● LOADING';
+    badge.className = 'badge loading';
+  }
+
+  setLoadingBadge();
+
+  // Load libv86.js from jsDelivr
+  advanceStep(0);
+  setLabel('libv86.js 다운로드 중…');
+
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/v86@latest/build/libv86.js';
+  script.onload = startEmulator;
+  script.onerror = () => {
+    setLabel('CDN 로드 실패 — 페이지를 새로고침 해주세요');
+  };
+  document.head.appendChild(script);
+
+  var emulator = null;
+
+  function startEmulator() {
+    advanceStep(1);
+    setLabel('BIOS 파일 로드 중…');
+
+    const V86_CDN = 'https://cdn.jsdelivr.net/npm/v86@latest/';
+    const COPY_SH = 'https://copy.sh/v86/';
+
+    emulator = new V86({
+      wasm_path: V86_CDN + 'build/v86.wasm',
+      memory_size: 512 * 1024 * 1024,
+      vga_memory_size: 8 * 1024 * 1024,
+      screen_container: document.getElementById('screen_container'),
+
+      bios: { url: V86_CDN + 'bios/seabios.bin' },
+      vga_bios: { url: V86_CDN + 'bios/vgabios.bin' },
+
+      // Alpine 9p virtio 파일시스템 (copy.sh 공개 서버)
+      filesystem: {
+        baseurl: COPY_SH + 'images/alpine-rootfs-flat/',
+        basefs:  COPY_SH + 'images/alpine-fs.json',
+      },
+
+      bzimage_initrd_from_filesystem: true,
+      cmdline: 'rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable quiet',
+
+      autostart: true,
     });
-};
+
+    // Track load progress via network events
+    emulator.add_listener('download-progress', function(e) {
+      if (e.file_index === 0 && currentStep < 2) {
+        advanceStep(2);
+        setLabel('Alpine 루트 파일시스템 다운로드 중… (' + Math.round(e.loaded / 1024) + ' KB)');
+      }
+      if (e.total) {
+        const pct = 25 + Math.round((e.loaded / e.total) * 50);
+        setProgress(Math.min(pct, 74));
+        setLabel('Alpine 파일시스템 ' + Math.round(e.loaded / 1024) + ' / ' + Math.round(e.total / 1024) + ' KB');
+      }
+    });
+
+    emulator.add_listener('download-complete', function() {
+      advanceStep(3);
+      setLabel('커널 부팅 중…');
+      setProgress(80);
+    });
+
+    // Hide overlay once serial output starts (Linux booting)
+    let serialLines = 0;
+    emulator.add_listener('serial0-output-char', function() {
+      serialLines++;
+      if (serialLines === 30) {
+        setProgress(95);
+      }
+      if (serialLines === 80) {
+        setTimeout(hideOverlay, 400);
+      }
+    });
+
+    // Fallback: hide after 90s no matter what
+    setTimeout(hideOverlay, 90000);
+  }
+
+  function focusTerm() {
+    document.getElementById('screen_container').querySelector('div').focus();
+    document.getElementById('screen_container').click();
+  }
+
+  function resetVM() {
+    if (emulator) {
+      emulator.restart();
+    }
+  }
+
+  function goFullscreen() {
+    const el = document.getElementById('screen_container');
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  }
 </script>
 </body>
 </html>
-
